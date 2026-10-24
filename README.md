@@ -51,10 +51,12 @@ JD AI Video Affiliate · 京东联盟推广 · 豆包 AI 视频生成 · 选品�
 
 ```bash
 make install
-make dev server
+make dev
 ```
 
-`make dev server` 同时启动 Tauri 桌面应用与 Vite 热更新服务；仅预览前端可使用 `make web`，地址为 `http://127.0.0.1:1420`。
+`make dev` 同时启动 Tauri 桌面应用与 Vite 热更新服务；仅预览前端可使用 `make web`，地址为 `http://127.0.0.1:1420`。
+
+这两个命令也可在 `desktop/` 目录运行。若 `1420` 被本项目的旧 Vite 占用，会先结束旧进程再启动；其他程序占用时会显示 PID 并停止，避免误杀。
 
 | 文件 | 内容与用途 |
 | --- | --- |

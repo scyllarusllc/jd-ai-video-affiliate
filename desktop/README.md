@@ -8,10 +8,14 @@
 
 ```bash
 make install
-make dev server
+make dev
 ```
 
 `make dev`、`make server` 也是同一个启动入口；组合执行只启动一次。Tauri 会同时启动 Vite 热更新服务。`make web` 仅启动前端服务，地址为 `http://127.0.0.1:1420`；账号、商品及脚本的本地存储功能需要桌面环境。
+
+根目录和 `desktop/` 目录都支持 `make dev`、`make web`。启动前会检查 `1420`，先结束当前用户在本项目目录下运行的旧 Vite 进程，再等待端口释放并启动。进程号会显示在终端；无法正常退出时只会对已核实的本项目进程强制结束。若端口属于其他程序，启动器会停止并显示占用 PID，避免误杀。不会自动换端口，因为 Tauri 的开发地址固定为 `1420`。
+
+启动回归检查：在 `desktop/` 中执行 `npm run test:startup`，覆盖空闲端口、清理本项目 Vite、保留其他程序和无效端口。`node scripts/start-dev.mjs desktop --check` 只清理并检查端口，不启动桌面应用。
 
 准备 Node.js（符合锁定 Vite 版本要求）、Rust 工具链及 Xcode Command Line Tools，在 `desktop/` 目录执行。本次构建使用 Node 26.8.1 与 Rust 1.91.1，依赖版本见锁文件。
 

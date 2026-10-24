@@ -4,10 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 127.0.0.1 --port 1420 --strictPort",
+    "dev": "node scripts/start-dev.mjs web",
     "build": "tsc --noEmit && vite build",
     "tauri": "tauri",
-    "desktop": "tauri dev",
+    "desktop": "node scripts/start-dev.mjs desktop",
+    "test:startup": "node --test scripts/start-dev.test.mjs",
     "check": "tsc --noEmit"
   },
   "dependencies": {
