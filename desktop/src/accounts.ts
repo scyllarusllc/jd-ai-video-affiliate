@@ -1,4 +1,4 @@
-import { invoke, isTauri } from '@tauri-apps/api/core';
+import { desktopCall as invoke } from './bridge';
 
 export type Account = { id: string; platform: 'doubao' | 'jd'; name: string; archived: boolean };
 type AccountStore = { accounts: Account[]; legacyImported: boolean };
@@ -7,7 +7,6 @@ const legacyKey = 'jd-affiliate-prototype-accounts-v1';
 // Isolate the desktop bridge so an Electron adapter can replace it later.
 export const accountService = {
   async load(): Promise<Account[]> {
-    if (!isTauri()) throw new Error('账号管理需要桌面环境，请使用 npm run desktop。');
     let store = await invoke<AccountStore>('list_accounts');
     if (!store.legacyImported) {
       const raw = localStorage.getItem(legacyKey);
