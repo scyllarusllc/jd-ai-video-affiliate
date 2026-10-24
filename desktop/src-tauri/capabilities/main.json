@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main-local",
+  "description": "Only the local management window receives core permissions.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

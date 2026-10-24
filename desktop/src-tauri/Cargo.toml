@@ -1,0 +1,24 @@
+[package]
+name = "jd-affiliate-desktop"
+version = "0.1.0"
+description = "macOS multi-account feasibility prototype"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+uuid = { version = "1", features = ["v4"] }
+rusqlite = { version = "0.38", features = ["bundled", "backup"] }
+serde = { version = "1", features = ["derive"] }
+csv = "1"
+serde_json = "1"
+
+[profile.dev]
+debug = 0
+incremental = false
+
+[profile.test]
+debug = 0
+incremental = false

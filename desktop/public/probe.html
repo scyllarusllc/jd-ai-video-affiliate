@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><title>账号存储隔离验证</title></head><body>
+<h1>账号存储隔离验证</h1>
+<p>在账号 A 保存一个标记，账号 B 应看不到。关闭窗口或重启应用后，重新打开同一账号，标记应仍存在。</p>
+<label>本窗口的标记 <input id="marker" maxlength="100"></label>
+<button id="save">保存</button><button id="clear">清空本窗口标记</button>
+<p id="status" role="status"></p>
+<p>本页仅验证相同网页来源下的 localStorage 隔离与持久化；真实平台 Cookie、登录恢复和上传下载需要另行验证。</p>
+<script src="/probe.js"></script>
+</body></html>

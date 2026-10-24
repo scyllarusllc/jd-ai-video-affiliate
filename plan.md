@@ -1,6 +1,10 @@
 # 京东 AI 短视频带货与佣金实战 软件开发计划
 
-编写日期：2026-10-24。状态：待开发。第一阶段平台：macOS。
+编写日期：2026-10-24。状态：Tauri 技术验证中。第一阶段平台：macOS。
+
+选型决策：先验证 Tauri 2；若关键网页路径不满足要求，回退 Electron。验证代码位于 `desktop/`，结果与回退标准见 [平台验证记录](docs/platform-validation.md)。
+
+开发进度：账号元数据层已引入 SQLite、旧数据事务迁移及可恢复归档；商品工作区已实现录入、编辑、搜索、CSV 预览及整批事务导入；脚本工作区已接入三类本地模板、正文编辑及不可变版本历史，保存商品快照并检测资料变更，数据库升级前保留备份。当前脚本组装不调用 AI，候选标题、素材及任务队列尚待开发。桌面控制权限仍阻止原生 UI 实测，M0 未验收，尚不能据此确定最终技术栈。
 
 ## 1. 产品目标与当前基础
 
@@ -12,7 +16,7 @@
 
 ## 2. 第一阶段范围 macOS MVP
 
-首版优先 Apple Silicon，拟以 macOS 14 及以上为支持基线。最低系统版本在技术验证后，结合选定 Electron 版本确定；Intel 安装包在第二阶段补齐。先通过签名并公证的 DMG 直接分发。
+首版优先 Apple Silicon，以 macOS 14 及以上为支持基线，使用独立 WebKit 数据存储隔离账号；Intel 安装包在第二阶段补齐。先通过签名并公证的 DMG 直接分发。
 
 | 模块 | 首版交付 | 验收要点 |
 | --- | --- | --- |
@@ -43,7 +47,7 @@
 6. 打开京东发布页，辅助填写，展示最终内容与挂品清单。
 7. 用户提交，软件保存平台内容 ID 或待核对记录，后续更新审核状态。
 
-参考截图保留“列表 + 网页工作区 + 可展开日志”的效率，但使用 macOS 菜单、快捷键、文件选择器和窗口行为。最小窗口以 1280×800 为设计起点，小尺寸下折叠日志与次要列。
+管理界面参考截图中的列表与日志组织，第一轮验证使用独立账号网页窗口，避免将不稳定的子 WebView API 作为前提；嵌入式布局在验证后决定。最小窗口以 1280×800 为设计起点，小尺寸下折叠日志与次要列。
 
 ## 4. 技术方案
 
@@ -51,18 +55,20 @@
 
 | 层级 | 选择 | 用途 |
 | --- | --- | --- |
-| 桌面容器 | Electron + TypeScript | 桌面生命周期、网页会话、下载与本地文件访问 |
+| 桌面容器 | Tauri 2 + Rust，Electron 作为回退 | 桌面生命周期、网页会话、下载与本地文件访问 |
 | 本地界面 | React + Vite | 账号表格、商品详情、素材预览和任务状态 |
-| 网页容器 | WebContentsView | 每个平台账号使用独立持久 session partition |
-| 本地存储 | SQLite，具体驱动在打包验证后确定 | 商品、素材、任务、运行记录和迁移版本 |
-| 凭据保护 | Electron safeStorage 的操作系统加密能力 | 保护显式保存的 API 密钥等敏感配置；不是浏览器会话目录的整体加密方案 |
+| 网页容器 | 稳定的 WebviewWindow API，macOS 使用 WKWebView | 每个账号使用稳定 UUID 对应的 dataStoreIdentifier，验证持久化与隔离 |
+| 本地存储 | SQLite + rusqlite，锁定版本见 Cargo.lock | 已落地账号、商品与脚本；后续扩展素材、任务及运行记录 |
+| 凭据保护 | macOS Keychain，Rust 接入方式在 M0 确定 | 保护显式保存的 API 密钥；不把网页会话整体加密作为已实现能力 |
 | 平台操作 | 豆包、京东独立 Adapter | 封装页面识别、能力检测、状态读取与具体操作 |
 | 媒体检查 | FFprobe / FFmpeg，验证分发许可证及签名后固定构建 | 读取尺寸、时长、音轨，生成封面与缩略图 |
-| 打包发布 | Electron Forge，签名与 Apple 公证 | 产出 DMG；先提供手动更新与版本说明 |
+| 打包发布 | Tauri CLI，签名与 Apple 公证 | 产出 DMG；先提供手动更新与版本说明 |
 
-桌面主进程负责数据库、会话、下载和任务调度；本地界面通过窄接口 IPC 调用。第三方网页禁用 Node 集成，启用上下文隔离与沙箱，不向远程页面暴露通用文件或命令执行能力。IPC 校验来源与参数，限制导航和新窗口的目标地址。
+Rust 后端负责数据库、会话、下载和任务调度；本地 React 界面通过窄接口命令调用。Capabilities 只授权本地管理窗口，不授权第三方页面；命令校验调用窗口与输入，限制导航及新窗口来源。若回退 Electron，远程页面禁用 Node 集成，启用上下文隔离和沙箱。
 
-浏览器自动化优先采用稳定、可维护且已验证的页面元素语义与状态，集中封装在 Adapter。只对可信来源、预定义动作开放页面操作。Playwright 可用于桌面应用端到端测试；是否采用其 Electron 支持及版本组合，要在 M0 实测后决定，不能将实验性能力作为发布前提。
+浏览器自动化优先采用已验证的元素语义与状态，集中封装在 Adapter。只对可信来源、预定义动作开放页面操作。Tauri 在 macOS 上不能直接依赖官方 tauri-driver 完成桌面 WebDriver 测试：本地前端可用浏览器测试，原生网页窗口先进行人工验证或独立 macOS UI 测试。若回退 Electron，再验证 Playwright 的 Electron 测试支持。
+
+回退时保留 React 业务界面、平台无关数据结构、任务状态与验收清单；替换 Rust IPC、WebKit 会话实现、平台桥接和打包层。Electron 版本需通过同一组账号隔离、登录恢复、生成下载与上传验证，回退不等于省略验证。
 
 官方 API 若确实开放且账号具备权限，应作为独立接入方式评估。网页版豆包与模型 API 是两种服务，不能假设账号额度、计费、视频能力或登录身份互通。M0 必须核实可接入范围，未确认的接口不进入承诺范围。
 
@@ -161,6 +167,13 @@
 ## 12. 技术资料
 
 技术方案参考以下官方文档，查阅日期为 2026-10-24；实施时重新确认所固定版本的支持情况。
+
+- [Tauri 配置](https://v2.tauri.app/reference/config/)：dataStoreIdentifier 的平台限制。
+- [Tauri WebView API](https://v2.tauri.app/reference/javascript/api/namespacewebview/)：子 WebView 与稳定独立窗口的区别。
+- [Tauri Capabilities](https://v2.tauri.app/security/capabilities/)：本地与远程页面权限边界。
+- [Tauri WebDriver](https://v2.tauri.app/develop/tests/webdriver/)：桌面自动化测试平台限制。
+
+以下为 Electron 回退方案参考：
 
 - [Electron WebContentsView](https://www.electronjs.org/docs/latest/api/web-contents-view)：网页容器。
 - [Electron session](https://www.electronjs.org/docs/latest/api/session)：会话管理与持久分区。

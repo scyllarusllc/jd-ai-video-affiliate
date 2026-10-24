@@ -1,0 +1,19 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "JD Affiliate Preview",
+  "version": "0.1.0",
+  "identifier": "com.scyllarusllc.jdaffiliate.preview",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [{ "label": "main", "title": "京东 AI 短视频带货与佣金实战 · 验证版", "width": 1180, "height": 820, "minWidth": 800, "minHeight": 600 }],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src ipc: http://ipc.localhost; img-src 'self' data:; object-src 'none'; frame-src 'none'"
+    }
+  },
+  "bundle": { "active": true, "targets": ["app"], "icon": ["icons/256x256.png"], "macOS": { "minimumSystemVersion": "14.0" } }
+}
