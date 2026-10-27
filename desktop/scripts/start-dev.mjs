@@ -18,38 +18,35 @@ export async function listeners(port) {
   }
 }
 
-async function isProjectVite(pid, root) {
-  try {
-    const [{ stdout: processInfo }, { stdout: directoryInfo }] = await Promise.all([
-      exec('ps', ['-p', String(pid), '-o', 'uid=', '-o', 'command=']),
-      exec('lsof', ['-a', '-p', String(pid), '-d', 'cwd', '-Fn']),
-    ]);
-    const uid = Number(processInfo.trim().split(/\s+/)[0]);
-    if (typeof process.getuid !== 'function' || uid !== process.getuid()) return false;
-    const cwd = directoryInfo.split('\n').find(line => line.startsWith('n'))?.slice(1);
-    if (!cwd || await realpath(cwd) !== root) return false;
-    return [join(root, 'node_modules', '.bin', 'vite'), join(root, 'node_modules', 'vite', 'bin', 'vite.js')]
-      .some(binary => processInfo.includes(binary));
-  } catch (error) {
-    if (error.code === 1 || error.code === 'ENOENT') return false;
-    throw error;
-  }
-}
-
-export async function freeDevPort({ port = 1420, root = desktopRoot, log = console.log } = {}) {
-  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('开发端口无效');
+export async function existingDesktopSession({ root = desktopRoot } = {}) {
   root = await realpath(root);
-  const pids = await listeners(port);
-  if (!pids.length) return;
-  // Check every owner before stopping any process. Never kill by port number alone.
-  for (const pid of pids) {
-    if (!(await isProjectVite(pid, root))) {
-      if (!(await listeners(port)).includes(pid)) continue;
-      throw new Error('端口 ' + port + ' 被其他程序占用（PID ' + pid + '），未终止该程序。请先核对：lsof -nP -iTCP:' + port + ' -sTCP:LISTEN');
+  const { stdout } = await exec('ps', ['-axo', 'pid=,uid=,command=']);
+  for (const line of stdout.split('\n')) {
+    const match = line.trim().match(/^(\d+)\s+(\d+)\s+(.+)$/);
+    if (!match) continue;
+    const [, pidText, uidText, command] = match;
+    const pid = Number(pidText);
+    // Earlier launchers take precedence when commands are started together.
+    if (pid >= process.pid || Number(uidText) !== process.getuid?.()) continue;
+    if (!/^(?:\S*\/)?node(?:\s|$)/.test(command) || !/start-dev\.mjs\s+desktop(?:\s|$)/.test(command)) continue;
+    try {
+      const { stdout: directory } = await exec('lsof', ['-a', '-p', String(pid), '-d', 'cwd', '-Fn']);
+      const cwd = directory.split('\n').find(value => value.startsWith('n'))?.slice(1);
+      if (cwd && await realpath(cwd) === root) return pid;
+    } catch (error) {
+      if (error.code !== 1 && error.code !== 'ENOENT') throw error;
     }
   }
+  return null;
+}
+
+export async function freeDevPort({ port = 1420, log = console.log } = {}) {
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('开发端口无效');
+  const pids = await listeners(port);
+  if (!pids.length) return;
+  if (pids.includes(process.pid)) throw new Error('开发端口由启动器自身占用，无法自动结束');
   for (const pid of pids) {
-    try { process.kill(pid, 'SIGTERM'); log('[dev] 结束旧开发服务 PID ' + pid + '，释放端口 ' + port); }
+    try { process.kill(pid, 'SIGTERM'); log('[dev] 结束端口占用进程 PID ' + pid + '，释放端口 ' + port); }
     catch (error) { if (error.code !== 'ESRCH') throw error; }
   }
   for (let attempt = 0; attempt < 30; attempt++) {
@@ -57,8 +54,8 @@ export async function freeDevPort({ port = 1420, root = desktopRoot, log = conso
     if (!remaining.length) return;
     if (attempt === 15) {
       for (const pid of remaining) {
-        if (pids.includes(pid) && await isProjectVite(pid, root)) {
-          try { process.kill(pid, 'SIGKILL'); log('[dev] 强制结束未退出的旧开发服务 PID ' + pid); }
+        if (pids.includes(pid)) {
+          try { process.kill(pid, 'SIGKILL'); log('[dev] 强制结束未退出的端口占用进程 PID ' + pid); }
           catch (error) { if (error.code !== 'ESRCH') throw error; }
         }
       }
@@ -71,6 +68,13 @@ export async function freeDevPort({ port = 1420, root = desktopRoot, log = conso
 async function main() {
   const mode = process.argv[2];
   if (!['desktop', 'web'].includes(mode)) throw new Error('用法：node scripts/start-dev.mjs desktop|web [--check]');
+  if (mode === 'desktop' && !process.argv.includes('--check')) {
+    const existing = await existingDesktopSession();
+    if (existing) {
+      console.log('[dev] 本项目开发环境已运行（PID ' + existing + '），继续使用已有实例；修改代码会自动更新。');
+      return;
+    }
+  }
   await freeDevPort();
   if (process.argv.includes('--check')) {
     console.log('[dev] 端口 1420 已空闲，启动检查通过（未启动桌面应用）。');

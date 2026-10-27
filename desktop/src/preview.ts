@@ -28,6 +28,15 @@ export async function previewCall(command: string, args: Record<string, unknown>
       accounts = [...accounts, account];
       return account;
     }
+    case 'rename_account': {
+      const account = accounts.find(account => account.id === args.accountId);
+      if (!account) throw new Error('账号不存在');
+      if (account.name !== args.expectedName) throw new Error('账号名称已变更，请刷新后重新编辑');
+      const name = String(args.name || '').trim();
+      if (!name || [...name].length > 60 || /[\u0000-\u001f\u007f-\u009f]/.test(name)) throw new Error('账号名称需为 1–60 个字符，且不含控制字符');
+      account.name = name;
+      return structuredClone(account);
+    }
     case 'archive_account': {
       const account = accounts.find(a => a.id === args.accountId);
       if (!account) throw new Error('演示账号不存在');

@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "tauri": "tauri",
     "desktop": "node scripts/start-dev.mjs desktop",
+    "test:login": "node --test scripts/login-monitor.test.mjs",
     "test:startup": "node --test scripts/start-dev.test.mjs",
     "check": "tsc --noEmit"
   },

@@ -14,7 +14,7 @@ export function isPreview() {
 }
 
 const labels: Record<string, string> = {
-  list_accounts: '读取账号', create_account: '添加账号', archive_account: '更新账号归档状态',
+  list_accounts: '读取账号', rename_account: '编辑账号', create_account: '添加账号', archive_account: '更新账号归档状态',
   import_legacy_accounts: '迁移旧账号', open_account: '打开账号窗口', list_products: '读取商品',
   save_product: '保存商品', preview_products_csv: '检查 CSV', import_products_csv: '导入商品',
   list_prompt_templates: '读取脚本模板', generate_prompt: '组装脚本草稿',

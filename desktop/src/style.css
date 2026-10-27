@@ -3,3 +3,36 @@
 @media(max-width:1000px){.workbench{grid-template-columns:260px minmax(0,1fr)}.module-nav button{padding:0 11px}.app-header h1 span{display:none}.account-workspace{padding:22px 20px 0}.workflow-strip{flex-wrap:wrap;gap:15px}.workflow-strip span{flex-basis:45%}.local-mode{display:none}.action-bar{flex-wrap:wrap}.action-bar button{padding:6px 10px}.content-workspace{padding:0 20px 20px}}
 @media(max-width:700px){.workbench{grid-template-columns:220px minmax(0,1fr);padding:6px;gap:6px}.sidebar-heading{padding:12px 10px}.account-table .status-column{width:48px}.quota-column{width:30px}.account-table th,.account-table td{padding:9px 5px}.account-status{font-size:9px}.product-form,.script-selectors{grid-template-columns:1fr}.module-nav{overflow:auto;min-height:43px}.module-nav button{padding:0 10px}.build-badge{display:none}.workspace-title{align-items:flex-start;gap:10px}.neutral-badge{display:none}.browser-launch{padding:26px 0}.content-workspace{padding:0 14px 20px}.log-panel{height:125px}.log-line{grid-template-columns:59px 24px 1fr;gap:5px;font-size:9px}.action-spacer{display:none}.checkbox-label{font-size:11px}}
 .mobile-account-picker{display:none}@media(max-width:700px){.workbench{grid-template-columns:minmax(0,1fr)}.account-sidebar{display:none}.mobile-account-picker{display:grid;grid-template-columns:58px 1fr;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid #e5eaf0;font-size:11px}.mobile-account-picker select{width:100%;min-width:0}.app-header{padding:0 12px}.account-workspace{padding:20px 16px 0}.browser-launch{padding:23px 0}.action-bar{gap:6px}.action-bar button{font-size:11px;padding:6px 9px}.module-nav{padding:0 6px}.workspace-status{padding:7px 12px}.log-panel{height:125px}}
+
+.downloads-panel { border-top: 1px solid #d8e1ef; padding: 10px 14px; background: #fff; flex-shrink: 0; }
+.downloads-panel summary { cursor: pointer; font-weight: 600; }
+.downloads-panel small { display: block; font-weight: normal; color: #64748b; font-size: 11px; overflow-wrap: anywhere; }
+.downloads-panel summary small { display: inline; margin-left: 12px; }
+.downloads-panel ul { list-style: none; padding: 0; margin: 8px 0 0; max-height: 180px; overflow: auto; }
+.downloads-panel li { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #edf0f5; padding: 8px 0; }
+.downloads-panel li span { min-width: 0; overflow-wrap: anywhere; }
+.downloads-panel li button { flex-shrink: 0; }
+.downloads-panel p { font-size: 12px; color: #64748b; }
+
+.download-file-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; flex-shrink: 0; }
+@media (max-width: 700px) { .downloads-panel li { align-items: flex-start; flex-direction: column; } .downloads-panel summary small { display: block; margin-left: 0; } }
+
+.media-library { padding: 0; border-top: 0; }
+.media-library ul { max-height: none; }
+.media-filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 18px; }
+.media-filters label:first-child { flex: 1; min-width: 200px; }
+.media-filters select { max-width: 230px; }
+.media-item-info { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.media-item-actions { width: min(330px, 45%); display: grid; gap: 10px; }
+.media-item-actions select { width: 100%; min-width: 0; }
+@media (max-width: 850px) { .media-library li { align-items: stretch; flex-direction: column; } .media-item-actions { width: 100%; } .module-nav { overflow-x: auto; } }
+
+.publish-dialog { width: 660px; max-height: 88vh; overflow: auto; }
+.publish-dialog textarea, .publish-dialog select { width: 100%; }
+.publish-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.publish-actions button.secondary { margin-left: 0; }
+.publish-readiness { padding: 10px 12px; border-radius: 5px; background: #f0f5fb; color: #426081; font-size: 12px; }
+
+.account-name-cell { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.account-name-cell .account-name { min-width: 0; flex: 1; }
+.account-edit { flex-shrink: 0; font-size: 10px; }

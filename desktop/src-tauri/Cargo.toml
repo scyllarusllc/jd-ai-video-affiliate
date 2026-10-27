@@ -22,3 +22,6 @@ incremental = false
 [profile.test]
 debug = 0
 incremental = false
+
+[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
+tauri-plugin-single-instance = "2.5.4"

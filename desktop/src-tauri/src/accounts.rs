@@ -108,6 +108,27 @@ pub fn create(conn: &Connection, platform: &str, name: &str) -> Result<Account, 
     Ok(account)
 }
 
+pub fn rename(
+    conn: &Connection,
+    id: &str,
+    name: &str,
+    expected_name: &str,
+) -> Result<Account, String> {
+    let mut account = get(conn, id)?;
+    account.name = name.into();
+    let account = validate(account)?;
+    let count = conn
+        .execute(
+            "UPDATE accounts SET name = ?1 WHERE id = ?2 AND name = ?3",
+            params![account.name, account.id, expected_name],
+        )
+        .map_err(err)?;
+    if count != 1 {
+        return Err("账号名称已变更，请刷新后重新编辑".into());
+    }
+    get(conn, &account.id)
+}
+
 pub fn archive(conn: &Connection, id: &str, archived: bool) -> Result<(), String> {
     let id = canonical_id(id)?;
     let count = conn
@@ -267,5 +288,26 @@ mod tests {
             assert!(initialize(&mut conn).is_err());
         }
         std::fs::remove_file(path).unwrap();
+    }
+    #[test]
+    fn rename_preserves_account_identity_and_rejects_invalid_or_stale_edits() {
+        let conn = database();
+        let original = create(&conn, "doubao", "账号 A").unwrap();
+        archive(&conn, &original.id, true).unwrap();
+        let updated = rename(&conn, &original.id, " 新名称 ", &original.name).unwrap();
+        assert_eq!(updated.name, "新名称");
+        assert_eq!(updated.id, original.id);
+        assert_eq!(updated.platform, original.platform);
+        assert!(updated.archived);
+        assert!(rename(&conn, &original.id, "覆盖", &original.name).is_err());
+        for invalid in [
+            "".to_string(),
+            " ".into(),
+            "名称\n控制字符".into(),
+            "字".repeat(61),
+        ] {
+            assert!(rename(&conn, &original.id, &invalid, "新名称").is_err());
+        }
+        assert_eq!(get(&conn, &original.id).unwrap().name, "新名称");
     }
 }
