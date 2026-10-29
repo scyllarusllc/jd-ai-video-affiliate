@@ -1,0 +1,50 @@
+#!/bin/bash
+# Summarize the latest row of each product's 「发布后数据」 table.
+# Rows hold cumulative values, so only the last dated row of each product counts.
+# Usage: jd-stats
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+
+shopt -s nullglob
+files=("$ROOT"/products/*/商品.md)
+if [ ${#files[@]} -eq 0 ]; then
+  echo "products/ 下还没有商品" >&2
+  exit 1
+fi
+
+for f in "${files[@]}"; do
+  slug="$(basename "$(dirname "$f")")"
+  awk -v slug="$slug" '
+    /^## / { in_section = ($0 == "## 发布后数据") }
+    in_section && /^\| *[0-9]{4}-[0-9]{2}-[0-9]{2} *\|/ { last = $0 }
+    END {
+      if (last == "") { print slug "\t-\t-\t-\t-\t-"; exit }
+      n = split(last, c, "|")
+      for (i = 2; i <= 6; i++) gsub(/[ ,¥]/, "", c[i])
+      print slug "\t" c[2] "\t" c[3] "\t" c[4] "\t" c[5] "\t" c[6]
+    }
+  ' "$f"
+done | awk -F'\t' '
+  function ratio(a, b, scale) { return b > 0 ? sprintf("%.2f", a / b * scale) : "-" }
+  BEGIN {
+    printf "%-22s %-10s %8s %7s %5s %9s %9s %9s\n", "商品", "统计日期", "播放", "点击", "订单", "佣金", "点击率%", "成交率%"
+  }
+  {
+    if ($2 == "-") {
+      printf "%-22s %-10s %8s %7s %5s %9s %9s %9s\n", $1, "未发布", "-", "-", "-", "-", "-", "-"
+      next
+    }
+    published++
+    views += $3; clicks += $4; orders += $5; income += $6
+    printf "%-22s %-10s %8d %7d %5d %9.2f %9s %9s\n", $1, $2, $3, $4, $5, $6, ratio($4, $3, 100), ratio($5, $4, 100)
+  }
+  END {
+    print ""
+    printf "已发布 %d 条：播放 %d，点击 %d，订单 %d，预估佣金 ¥%.2f\n", published, views, clicks, orders, income
+    printf "每条平均点击 %s；点击率 %s%%；成交率 %s%%；每次点击 ¥%s；每单 ¥%s\n", \
+      ratio(clicks, published, 1), ratio(clicks, views, 100), ratio(orders, clicks, 100), \
+      ratio(income, clicks, 1), ratio(income, orders, 1)
+  }
+'

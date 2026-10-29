@@ -17,8 +17,11 @@
 workflow/bin/jd-new storage-basket 100312007386 https://item.jd.com/100312007386.html "日式大号收纳篮"
 workflow/bin/jd-account open doubao-1
 workflow/bin/jd-check products/storage-basket/v1.mp4
+workflow/bin/jd-stats
 ```
 
 每个商品的进度、实验记录和发布草稿都在 `products/<slug>/商品.md`。流程和规则见 [SKILL.md](../.claude/skills/jd-video/SKILL.md)，制作方法见 [视频提示词与制作策略](../docs/video-prompt-strategy.md)。
 
 `jd-check` 只检查格式、分辨率、时长和音轨，商品是否匹配、完整播放和听检仍需人工完成。最终发布由你在京东后台亲自提交。
+
+发布后，把播放、点击、订单和预估佣金按日期追加到商品的「发布后数据」表（累计值），`jd-stats` 会汇总所有商品，用来判断平台是否给 AI 视频流量。建议先发 10–20 条，再决定是否扩大规模。
