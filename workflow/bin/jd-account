@@ -1,0 +1,51 @@
+#!/bin/bash
+# Open a platform account in its own Chrome profile, so accounts never share cookies.
+# Profiles live outside the repo; accounts.conf only stores names and platforms.
+# Usage: jd-account list | jd-account open <name>
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+CONF="$ROOT/workflow/accounts.conf"
+PROFILES="${JD_PROFILES_DIR:-$HOME/.local/share/jd-affiliate/chrome}"
+
+platform_url() {
+  case "$1" in
+    doubao) echo "https://www.doubao.com/chat/" ;;
+    jd) echo "https://dr.jd.com/" ;;
+    *) echo "Error: unknown platform '$1' (use doubao or jd)" >&2; return 1 ;;
+  esac
+}
+
+accounts() {
+  sed -e 's/#.*//' "$CONF" | awk 'NF >= 2 { print $1, $2 }'
+}
+
+case "${1:-}" in
+  list)
+    accounts | while read -r name platform; do
+      if [ -d "$PROFILES/$name" ]; then
+        state="已创建"
+      else
+        state="未打开过"
+      fi
+      printf '%-20s %-8s %s\n' "$name" "$platform" "$state"
+    done
+    ;;
+  open)
+    name="${2:?Usage: jd-account open <name>}"
+    platform=$(accounts | awk -v n="$name" '$1 == n { print $2 }')
+    if [ -z "$platform" ]; then
+      echo "Error: '$name' not in $CONF" >&2
+      exit 1
+    fi
+    url=$(platform_url "$platform")
+    mkdir -p "$PROFILES/$name"
+    setsid -f google-chrome-stable --user-data-dir="$PROFILES/$name" "$url" >/dev/null 2>&1
+    echo "Opened $name ($platform): $url"
+    ;;
+  *)
+    echo "Usage: jd-account list | jd-account open <name>" >&2
+    exit 1
+    ;;
+esac

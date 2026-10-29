@@ -1,0 +1,72 @@
+#!/bin/bash
+# Technical check of a generated video with ffprobe.
+# Only covers format, size, duration and audio presence. Product match and
+# full playback/listening still have to be done by a person.
+# Usage: jd-check <video> [...]
+
+set -uo pipefail
+
+if [ $# -lt 1 ]; then
+  echo "Usage: jd-check <video> [...]" >&2
+  exit 1
+fi
+
+status=0
+
+check() {
+  local file="$1"
+  echo "== $file"
+  if [ ! -f "$file" ]; then
+    echo "FAIL  文件不存在"
+    status=1
+    return
+  fi
+
+  local width height duration audio
+  width=$(ffprobe -v error -select_streams v:0 -show_entries stream=width -of csv=p=0 "$file")
+  height=$(ffprobe -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$file")
+  duration=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$file")
+  audio=$(ffprobe -v error -select_streams a -show_entries stream=index -of csv=p=0 "$file")
+
+  if [ -z "$width" ] || [ -z "$height" ]; then
+    echo "FAIL  没有视频流"
+    status=1
+    return
+  fi
+
+  echo "INFO  ${width}x${height}，$(printf '%.1f' "$duration") 秒"
+
+  # 9:16 within 1% tolerance
+  if awk -v w="$width" -v h="$height" 'BEGIN { r = w / h; exit !(r > 0.5569 && r < 0.5681) }'; then
+    echo "OK    9:16 竖版"
+  else
+    echo "WARN  不是 9:16 竖版"
+  fi
+
+  local short=$(( width < height ? width : height ))
+  if [ "$short" -ge 720 ]; then
+    echo "OK    短边 ${short}px，不低于 720P"
+  else
+    echo "FAIL  短边 ${short}px，低于 720P"
+    status=1
+  fi
+
+  # Courseware uses ~15s as the starting point; not a platform limit
+  if awk -v d="$duration" 'BEGIN { exit !(d >= 10 && d <= 30) }'; then
+    echo "OK    时长在 10–30 秒"
+  else
+    echo "WARN  时长不在 10–30 秒，核对发布入口要求"
+  fi
+
+  if [ -n "$audio" ]; then
+    echo "OK    有音轨（仍需完整听检）"
+  else
+    echo "WARN  没有音轨"
+  fi
+}
+
+for f in "$@"; do
+  check "$f"
+done
+
+exit $status

@@ -41,6 +41,8 @@ JD AI Video Affiliate · 京东联盟推广 · 豆包 AI 视频生成 · 选品�
 
 ## 项目资料
 
+自己运营可使用不依赖桌面软件的 [轻量流程](workflow/README.md)：商品资料用 Markdown 管理，账号用独立 Chrome 配置隔离，由 Claude Code 辅助操作。
+
 软件开发路线见 [开发计划 plan.md](plan.md)，第一阶段面向 macOS。
 
 先试 Tauri，关键网页能力不达标时回退 Electron。启动方式见 [桌面验证版说明](desktop/README.md)，验证进度见 [平台验证记录](docs/platform-validation.md)。

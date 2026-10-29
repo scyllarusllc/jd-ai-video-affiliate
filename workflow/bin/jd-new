@@ -1,0 +1,39 @@
+#!/bin/bash
+# Create a product folder from the template.
+# Usage: jd-new <slug> [sku] [url] [title]
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+TEMPLATE="$ROOT/workflow/templates/商品.md"
+
+if [ $# -lt 1 ]; then
+  echo "Usage: jd-new <slug> [sku] [url] [title]" >&2
+  exit 1
+fi
+
+slug="$1"
+sku="${2:-}"
+url="${3:-}"
+title="${4:-$slug}"
+
+if ! [[ "$slug" =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]]; then
+  echo "Error: slug must use letters, digits, '-' or '_' (e.g. storage-basket)" >&2
+  exit 1
+fi
+
+dir="$ROOT/products/$slug"
+if [ -e "$dir" ]; then
+  echo "Error: $dir already exists" >&2
+  exit 1
+fi
+
+mkdir -p "$dir"
+# Escape sed replacement metacharacters so URLs and titles are inserted verbatim
+esc() { printf '%s' "$1" | sed 's/[&|\\]/\\&/g'; }
+sed -e "s|{{TITLE}}|$(esc "$title")|" \
+    -e "s|{{SKU}}|$(esc "$sku")|" \
+    -e "s|{{URL}}|$(esc "$url")|" \
+    "$TEMPLATE" > "$dir/商品.md"
+
+echo "$dir/商品.md"
