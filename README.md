@@ -59,6 +59,8 @@ JD AI Video Affiliate · 京东联盟推广 · 豆包 AI 视频生成 · 选品�
 
 自己运营时不依赖桌面软件：每个商品一个 Markdown 商品卡，每个账号一个独立 Chrome 配置，由 Claude Code 按 [jd-video 技能](.claude/skills/jd-video/SKILL.md) 辅助选品、写提示词、在豆包生成、检查成片和准备发布。生成前需确认额度消耗，最终发布由你在京东后台亲自提交。详细说明见 [workflow/README.md](workflow/README.md)。
 
+如何让 AI 视频通过京东审核、让用户愿意看完并点击，见 [视频质量方案 plan.md](plan.md)：京东规则与 AI 标识要求、真实商品素材加 AI 场景的制作方法、四道质量关卡和验证实验。
+
 ```bash
 workflow/bin/jd-account open doubao-1   # 用独立 Chrome 配置打开账号，首次需自行登录
 workflow/bin/jd-new storage-basket 100312007386 https://item.jd.com/100312007386.html "日式大号收纳篮"
@@ -79,7 +81,7 @@ workflow/bin/jd-stats                   # 汇总各商品发布后数据
 
 `desktop/` 为 macOS Tauri 技术验证版，目标是为不使用 Claude Code 的用户提供集成工作台。自己运营阶段改用上述轻量流程，桌面软件在流量验证通过且确有分发需求后再继续。
 
-已实现账号保存与归档恢复、商品录入与 CSV 导入、本地脚本模板与版本历史、视频素材库及发布资料包导出；真实平台登录、AI 视频生成与发布流程仍待验证和开发。开发路线见 [plan.md](plan.md)，启动方式见 [桌面验证版说明](desktop/README.md)，验证进度见 [平台验证记录](docs/platform-validation.md)。需在 macOS 上运行 `make install && make dev`。
+已实现账号保存与归档恢复、商品录入与 CSV 导入、本地脚本模板与版本历史、视频素材库及发布资料包导出；真实平台登录、AI 视频生成与发布流程仍待验证和开发。开发路线见 [桌面软件开发计划](docs/desktop-plan.md)，启动方式见 [桌面验证版说明](desktop/README.md)，验证进度见 [平台验证记录](docs/platform-validation.md)。需在 macOS 上运行 `make install && make dev`。
 
 ## 项目资料
 
